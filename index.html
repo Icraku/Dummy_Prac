@@ -17,7 +17,7 @@
     --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:var(--ink);color:var(--text);font-family:var(--font-body);}
+  html,body{margin:0;padding:0;background:var(--ink);color:var(--text);font-family:var(--font-body);color-scheme:dark;}
   body{min-height:100vh;}
   ::selection{background:var(--brass);color:var(--ink);}
   a{color:var(--brass);}
@@ -50,6 +50,7 @@
     border-radius:6px;padding:10px 12px;font-size:14px;outline:none;
   }
   input:focus,select:focus,textarea:focus{border-color:var(--brass);}
+  select option{background:var(--panel);color:var(--text);}
   textarea{resize:vertical;line-height:1.5;}
   .row{display:flex;gap:14px;flex-wrap:wrap;}
   .row > div{flex:1;min-width:200px;}
@@ -349,248 +350,914 @@
           <div style="text-align:right;"><span class="pill" id="audiencePill"></span></div>
         </div>
         <div class="seats" id="seats"></div>
-        <div c  .seat{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;}
-  .seat svg{width:44px;height:44px;}
-  .seat .mood-label{font-size:10px;color:var(--text-soft);margin-top:4px;text-transform:capitalize;}
-  .live-transcript{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:14px;min-height:120px;max-height:260px;overflow-y:auto;font-size:14px;line-height:1.6;}
-  .overflow-text{color:var(--alert);}
-
-  /* reports */
-  .score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-  .score-label{width:150px;font-size:13px;color:var(--text-soft);flex-shrink:0;}
-  .score-bar-bg{flex:1;height:8px;background:var(--panel-2);border-radius:5px;overflow:hidden;}
-  .score-bar-fill{height:100%;background:linear-gradient(90deg,var(--brass-dim),var(--brass));}
-  .score-num{font-family:var(--font-mono);font-size:12.5px;width:34px;text-align:right;color:var(--text-soft);}
-  .answer-review{border-top:1px solid var(--line);padding:16px 0;}
-  .answer-review:first-child{border-top:none;padding-top:0;}
-  .answer-review .q{font-family:var(--font-display);font-size:15.5px;margin-bottom:8px;}
-  .review-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;}
-  @media(max-width:700px){.review-grid{grid-template-columns:1fr;}}
-  .review-grid .label{color:var(--brass);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
-  .improved-box{background:var(--panel-2);border-left:2px solid var(--signal);padding:10px 13px;border-radius:0 6px 6px 0;font-size:13.5px;line-height:1.5;margin-top:6px;}
-  .badge-estimated{font-size:10.5px;color:var(--alert);border:1px solid var(--alert-dim);padding:2px 7px;border-radius:10px;margin-left:8px;}
-
-  /* progress */
-  .session-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
-  .session-row:last-child{border-bottom:none;}
-  .session-meta{color:var(--text-soft);font-size:12px;}
-
-  footer{border-top:1px solid var(--line);padding:26px 0;color:var(--text-soft);font-size:12px;text-align:center;}
-</style>
-</head>
-<body>
-
-<header class="top">
-  <div class="wrap topbar">
-    <div class="brand">
-      <span class="brand-mark"></span>
-      <span class="brand-name">The Room</span>
-      <span class="brand-sub">Communication Simulator</span>
-    </div>
-    <nav class="tabs">
-      <button data-view="setup" class="active">Setup</button>
-      <button data-view="interview">Interview</button>
-      <button data-view="presentation">Presentation</button>
-      <button data-view="progress">Progress</button>
-    </nav>
-  </div>
-</header>
-
-<main class="wrap">
-
-  <!-- ============ SETUP ============ -->
-  <section id="view-setup">
-    <h1 class="page-title">Connect a model</h1>
-    <p class="page-sub">Pick an AI provider and drop in your own API key. It stays in this browser — nothing is sent anywhere except straight to the provider (or through your own proxy, for providers that block browser requests).</p>
-
-    <div class="card">
-      <h2>Provider</h2>
-      <label>Provider</label>
-      <select id="providerSelect"></select>
-      <div class="hint" id="providerHint"></div>
-
-      <label>Model</label>
-      <select id="modelSelect"></select>
-
-      <label>API key</label>
-      <input type="password" id="apiKeyInput" placeholder="Paste your key">
-      <div class="hint">Stored only in this browser's local storage. Clear it any time with the button below.</div>
-
-      <label style="margin-top:18px;">
-        <input type="checkbox" id="useProxyToggle" style="width:auto;display:inline-block;margin-right:8px;vertical-align:middle;">
-        Route through my Vercel proxy (needed for Groq and Anthropic — browsers block direct calls to them)
-      </label>
-      <div id="proxyUrlWrap" class="hidden">
-        <label>Proxy URL</label>
-        <input type="text" id="proxyUrlInput" placeholder="/api/chat  (default if deployed alongside this file)" value="/api/chat">
-      </div>
-
-      <div class="btn-row">
-        <button class="btn" id="testConnBtn">Test connection</button>
-        <button class="btn secondary" id="saveKeyBtn">Save to this browser</button>
-        <button class="btn secondary" id="clearKeyBtn">Clear saved key</button>
-      </div>
-      <div class="status-line" id="connStatus"></div>
-      <div class="hint">Groq and Anthropic route through the proxy and won't connect from an in-chat preview — deploy first (see README), then test on the real URL.</div>
-    </div>
-
-    <div class="card">
-      <h2>Which provider should I use?</h2>
-      <p class="hint" style="margin-top:0;">
-        <strong>Groq (default, open-source, free)</strong> — no credit card, roughly 30 requests/min and up to ~1,000–14,400 requests/day depending on the model. <strong>Llama 3.3 70B Versatile</strong> is the best balance of quota and quality for this app. <strong>Kimi K2</strong> on Groq is the closest open-weight model to Claude Sonnet on reasoning/code benchmarks, but it has a smaller quota and is occasionally pulled from the free catalog — treat it as a step-up option, not the default.<br><br>
-        <strong>Gemini</strong> has a free daily quota too (flash-lite stretches it furthest) but enabling billing removes the wall if you want this as a daily driver.<br><br>
-        <strong>OpenAI / Anthropic</strong> are paid-only, no free tier — use them if you already have credits and want the strongest possible coaching quality.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ INTERVIEW ============ -->
-  <section id="view-interview" class="hidden">
-    <h1 class="page-title">Interview Simulator</h1>
-    <p class="page-sub">Paste your CV and the job description, pick who's interviewing you, and go.</p>
-
-    <div id="int-setup">
-      <div class="card">
-        <h2>1. Materials</h2>
-        <label>Your CV / résumé (paste as text)</label>
-        <textarea id="cvInput" rows="6" placeholder="Paste your CV text here..."></textarea>
-        <label>Job description</label>
-        <textarea id="jdInput" rows="6" placeholder="Paste the job description here..."></textarea>
-        <label>Anything else worth knowing? (optional)</label>
-        <textarea id="notesInput" rows="2" placeholder="e.g. this is a promotion interview, I'm nervous about salary talk, etc."></textarea>
-        <div class="hint">This app reads pasted text only — no PDF/DOCX parsing yet. Copy-paste from your file works fine.</div>
-      </div>
-
-      <div class="card">
-        <h2>2. Who's interviewing you</h2>
-        <div class="persona-grid" id="personaGrid"></div>
-      </div>
-
-      <div class="card">
-        <h2>3. Difficulty</h2>
-        <select id="difficultySelect">
-          <option value="warmup">Warm-up — supportive, few curveballs</option>
-          <option value="standard" selected>Standard — realistic pushback</option>
-          <option value="tough">Tough — challenges assumptions, digs for evidence</option>
-        </select>
+        <div class="live-transcript" id="liveTranscriptBox"></div>
+        <div class="hint" id="speechSupportNote" style="margin-top:8px;"></div>
         <div class="btn-row">
-          <button class="btn" id="genQuestionsBtn">Generate my question set</button>
+          <button class="mic-btn" id="presMicBtn">🎤 Start speaking</button>
+          <button class="btn secondary" id="presTypeAddBtn">Type a line instead</button>
+          <button class="btn danger" id="endPresBtn">End & take questions</button>
         </div>
-        <div class="hint">Generates a tailored set (not all 150 at once — a focused batch keeps quality and quota sane; you can generate more later).</div>
+        <textarea id="presTypeInput" rows="2" class="hidden" placeholder="Type what you'd say, then press Add"></textarea>
+        <div class="btn-row hidden" id="presTypeAddRow"><button class="btn secondary" id="presTypeCommit">Add to transcript</button></div>
       </div>
     </div>
 
-    <div id="int-calibration" class="hidden">
+    <div id="pres-qa" class="hidden">
       <div class="card">
-        <h2>Calibration round</h2>
-        <p class="hint" style="margin-top:0;">Three quick warm-ups so the coaching sounds like <em>you</em>, not a generic AI rewrite. Answer naturally.</p>
-        <div id="calibQuestion" style="font-family:var(--font-display);font-size:16px;margin:14px 0 8px;"></div>
-        <textarea id="calibAnswer" rows="4" placeholder="Type your answer..."></textarea>
-        <div class="mic-row">
-          <button class="mic-btn" id="calibMicBtn">🎤 Speak instead</button>
-          <span class="hint" id="calibMicStatus"></span>
-        </div>
-        <div class="btn-row"><button class="btn" id="calibNextBtn">Next</button></div>
+        <h2>Audience questions</h2>
+        <div id="qaArea"></div>
       </div>
     </div>
 
-    <div id="int-live" class="hidden">
-      <div class="stage">
-        <div class="interviewer-panel">
-          <div class="avatar-row">
-            <div id="interviewerAvatar"></div>
-            <div>
-              <div class="avatar-name" id="interviewerName"></div>
-              <div class="avatar-role" id="interviewerRole"></div>
-            </div>
-            <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
-              <span class="rec-dot"></span><span style="font-size:11px;color:var(--text-soft);">LIVE</span>
-            </div>
-          </div>
-          <div class="qcount" id="qCounter"></div>
-          <div class="transcript" id="interviewTranscript"></div>
-          <div class="answer-box">
-            <textarea id="liveAnswer" rows="3" placeholder="Type your answer..."></textarea>
-            <div class="mic-row">
-              <button class="mic-btn" id="liveMicBtn">🎤 Speak instead</button>
-              <span class="hint" id="liveMicStatus"></span>
-            </div>
-            <div class="btn-row">
-              <button class="btn" id="sendAnswerBtn">Send answer</button>
-              <button class="btn danger" id="endInterviewBtn">End interview</button>
-            </div>
-          </div>
-        </div>
-        <div class="observation-rail">
-          <h3><span class="rec-dot" style="animation:none;background:var(--brass);"></span> Observing</h3>
-          <div id="obsNotes"></div>
-        </div>
-      </div>
-    </div>
-
-    <div id="int-report" class="hidden"></div>
+    <div id="pres-report" class="hidden"></div>
   </section>
 
-  <!-- ============ PRESENTATION ============ -->
-  <section id="view-presentation" class="hidden">
-    <h1 class="page-title">Presentation Studio</h1>
-    <p class="page-sub">Bring your notes, pick an audience, and rehearse out loud (or by typing).</p>
+  <!-- ============ PROGRESS ============ -->
+  <section id="view-progress" class="hidden">
+    <h1 class="page-title">Progress</h1>
+    <p class="page-sub">Stored locally in this browser only — no account, no server.</p>
+    <div class="card" id="progressList"></div>
+  </section>
 
-    <div id="pres-setup">
-      <div class="card">
-        <h2>1. Your material</h2>
-        <textarea id="presNotes" rows="8" placeholder="Paste your notes, outline, or talking points..."></textarea>
-      </div>
-      <div class="card">
-        <h2>2. Format</h2>
-        <div class="row">
-          <div>
-            <label>Duration</label>
-            <select id="durationSelect">
-              <option value="180">Quick update — 3 min</option>
-              <option value="300" selected>Daily stand-up — 5 min</option>
-              <option value="600">Project brief — 10 min</option>
-              <option value="1200">Technical presentation — 20 min</option>
-              <option value="custom">Custom</option>
-            </select>
-            <input type="number" id="customDuration" class="hidden" placeholder="Seconds" style="margin-top:8px;">
-          </div>
-          <div>
-            <label>Audience</label>
-            <select id="audienceSelect">
-              <option value="Executive board — terse, impact-focused, interrupts with numbers questions">Executive board</option>
-              <option value="Team meeting — casual, supportive, occasional tangents" selected>Team meeting</option>
-              <option value="Investor pitch — skeptical, ROI-focused, tough Q&A">Investor pitch</option>
-              <option value="Conference room — mixed engagement, some distracted">Conference / stakeholder room</option>
-              <option value="Classroom — curious, asks clarifying basics">Classroom / teaching</option>
-            </select>
-          </div>
-        </div>
-        <label>Audience reactions</label>
-        <select id="reactionMode">
-          <option value="local">Local — instant, free, no API calls (default)</option>
-          <option value="ai">AI-grounded — calls your model every interval, uses more quota</option>
-        </select>
-        <div class="row" id="reactionIntervalWrap">
-          <div>
-            <label>Reaction interval</label>
-            <select id="reactionInterval">
-              <option value="15">Every 15s</option>
-              <option value="30" selected>Every 30s</option>
-              <option value="60">Every 60s (very frugal)</option>
-              <option value="0">Off</option>
-            </select>
-          </div>
-        </div>
-        <div class="btn-row"><button class="btn" id="startPresBtn">Step on stage</button></div>
-      </div>
-    </div>
+</main>
 
-    <div id="pres-live" class="hidden">
-      <div class="card">
-        <div class="row" style="align-items:center;">
-          <div><span class="timer-display" id="presTimer">00:00</span></div>
-          <div style="text-align:right;"><span class="pill" id="audiencePill"></span></div>
-        </div>
-        <div class="seats" id="seats"></div>
-        <div c
+<footer>The Room — zero-dependency, self-contained. Interview &amp; Presentation modules built; Meeting Simulator and camera-based delivery analysis are on the roadmap, not in this build.</footer>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= PROVIDERS ================= */
+const PROVIDERS = {
+  groq: {
+    label: 'Groq — open-source, free tier',
+    kind: 'openai-chat',
+    base: 'https://api.groq.com/openai/v1/chat/completions',
+    needsProxy: true,
+    models: [
+      {id:'llama-3.3-70b-versatile', label:'Llama 3.3 70B Versatile — default, best quota/quality balance'},
+      {id:'openai/gpt-oss-120b', label:'GPT-OSS 120B — strong reasoning'},
+      {id:'qwen/qwen3-32b', label:'Qwen3 32B — solid all-rounder'},
+      {id:'moonshotai/kimi-k2-instruct', label:'Kimi K2 — closest to Sonnet-level, lower quota'}
+    ],
+    hint: 'Free at console.groq.com, no card needed. ~30 req/min, up to ~1,000+ req/day depending on model. Needs the proxy (CORS).'
+  },
+  gemini: {
+    label: 'Google Gemini',
+    kind: 'gemini',
+    base: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+    needsProxy: false,
+    models: [
+      {id:'gemini-2.5-flash-lite', label:'Gemini 2.5 Flash-Lite — cheapest, stretches free quota furthest'},
+      {id:'gemini-2.5-flash', label:'Gemini 2.5 Flash'},
+      {id:'gemini-2.5-pro', label:'Gemini 2.5 Pro'}
+    ],
+    hint: 'Free daily quota at aistudio.google.com. Enable billing to remove the wall.'
+  },
+  openai: {
+    label: 'OpenAI (paid)',
+    kind: 'openai-chat',
+    base: 'https://api.openai.com/v1/chat/completions',
+    needsProxy: false,
+    models: [
+      {id:'gpt-4.1-mini', label:'GPT-4.1 mini'},
+      {id:'gpt-4.1', label:'GPT-4.1'}
+    ],
+    hint: 'Paid only, no free tier.'
+  },
+  anthropic: {
+    label: 'Anthropic Claude (paid)',
+    kind: 'anthropic',
+    base: 'https://api.anthropic.com/v1/messages',
+    needsProxy: true,
+    models: [
+      {id:'claude-sonnet-5', label:'Claude Sonnet 5'},
+      {id:'claude-haiku-4-5-20251001', label:'Claude Haiku 4.5 — cheaper'}
+    ],
+    hint: 'Paid only. Always needs the proxy — browsers block direct calls to Anthropic\u2019s API.'
+  }
+};
+
+/* ================= STATE / STORAGE ================= */
+const LS_KEY = 'theroom_settings_v1';
+const LS_SESSIONS = 'theroom_sessions_v1';
+
+function loadSettings(){
+  try{ return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }catch(e){ return {}; }
+}
+function saveSettings(s){ try{ localStorage.setItem(LS_KEY, JSON.stringify(s)); }catch(e){} }
+
+let SETTINGS = Object.assign({providerId:'groq', model:'llama-3.3-70b-versatile', apiKey:'', useProxy:true, proxyUrl:'/api/chat'}, loadSettings());
+
+function loadSessions(){
+  try{ return JSON.parse(localStorage.getItem(LS_SESSIONS)) || []; }catch(e){ return []; }
+}
+function addSession(sess){
+  const all = loadSessions();
+  all.unshift(sess);
+  try{ localStorage.setItem(LS_SESSIONS, JSON.stringify(all.slice(0,50))); }catch(e){}
+}
+
+/* ================= AI CALL LAYER ================= */
+async function callAI({system, messages, temperature=0.8, maxTokens=1400, json=false}){
+  const p = PROVIDERS[SETTINGS.providerId];
+  if(!SETTINGS.apiKey) throw new Error('No API key set. Go to Setup.');
+  let url, headers, body;
+
+  if(p.kind === 'openai-chat'){
+    url = p.base;
+    headers = {'Content-Type':'application/json','Authorization':'Bearer '+SETTINGS.apiKey};
+    body = {model:SETTINGS.model, temperature, max_tokens:maxTokens,
+      messages:[{role:'system',content:system}].concat(messages)};
+    if(json) body.response_format = {type:'json_object'};
+  } else if(p.kind === 'gemini'){
+    url = p.base.replace('{model}', SETTINGS.model) + '?key=' + encodeURIComponent(SETTINGS.apiKey);
+    headers = {'Content-Type':'application/json'};
+    body = {
+      systemInstruction: {parts:[{text:system}]},
+      contents: messages.map(m => ({role: m.role === 'assistant' ? 'model' : 'user', parts:[{text:m.content}]})),
+      generationConfig: Object.assign({temperature, maxOutputTokens:maxTokens, thinkingConfig:{thinkingBudget:0}},
+        json ? {responseMimeType:'application/json'} : {})
+    };
+  } else if(p.kind === 'anthropic'){
+    url = p.base;
+    headers = {'Content-Type':'application/json','x-api-key':SETTINGS.apiKey,
+      'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+    body = {model:SETTINGS.model, system, max_tokens:maxTokens, temperature, messages};
+  }
+
+  let res;
+  if(SETTINGS.useProxy || p.needsProxy){
+    res = await fetch(SETTINGS.proxyUrl || '/api/chat', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url, headers, body})
+    });
+  } else {
+    res = await fetch(url, {method:'POST', headers, body: JSON.stringify(body)});
+  }
+  if(!res.ok){
+    const ct = res.headers.get('content-type') || '';
+    if(ct.indexOf('text/html') !== -1){
+      throw new Error('Got an HTML page back instead of an API response (status ' + res.status + '). ' +
+        'That almost always means the proxy URL doesn\'t point at a real api/chat.js yet — ' +
+        'either it isn\'t deployed, or (if you\'re testing inside a chat preview) relative paths like ' +
+        '"/api/chat" resolve against that site instead of your own deployment. Deploy this app ' +
+        '(e.g. to Vercel) and test from the real URL. See README for a local-testing option too.');
+    }
+    const t = await res.text();
+    throw new Error('API error ' + res.status + ': ' + t.slice(0,300));
+  }
+  const data = await res.json();
+  return extractText(p.kind, data);
+}
+
+function extractText(kind, data){
+  try{
+    if(kind === 'openai-chat') return data.choices[0].message.content;
+    if(kind === 'gemini') return (data.candidates[0].content.parts || []).map(x=>x.text||'').join('');
+    if(kind === 'anthropic') return data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+  }catch(e){
+    throw new Error('Unexpected response shape from provider: ' + JSON.stringify(data).slice(0,300));
+  }
+}
+
+function parseJSONLoose(text, fallback){
+  if(!text) return fallback;
+  let t = text.trim();
+  t = t.replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  try{ return JSON.parse(t); }catch(e){}
+  const m = t.match(/\{[\s\S]*\}/);
+  if(m){ try{ return JSON.parse(m[0]); }catch(e){} }
+  return fallback;
+}
+
+function clamp(n,a,b){ return Math.max(a, Math.min(b, n)); }
+
+const FILLERS = /\b(um+|uh+|like|you know|sort of|kind of|basically|actually|literally|i mean)\b/gi;
+
+function estimateScoresLocally(text){
+  const words = (text||'').trim().split(/\s+/).filter(Boolean);
+  const fillerCount = ((text||'').match(FILLERS) || []).length;
+  const sentences = (text||'').split(/[.!?]+/).filter(s=>s.trim().length>0);
+  const avgLen = sentences.length ? words.length/sentences.length : 12;
+  const fillerRate = words.length ? fillerCount/words.length : 0;
+  const clarity = clamp(85 - fillerRate*300 - Math.abs(avgLen-16)*1.5, 25, 92);
+  const structure = clamp(70 - fillerRate*200, 25, 90);
+  return {
+    clarity: Math.round(clarity), structure: Math.round(structure),
+    confidence: Math.round(clamp(75 - fillerRate*250,25,90)),
+    storytelling: 60, technicalDepth: 60, leadership: 55,
+    estimatedLocally: true
+  };
+}
+
+/* ================= PERSONAS ================= */
+const PERSONAS = [
+  {id:'hr', name:'Friendly HR Recruiter', role:'People & Culture', tags:'warm · encouraging · culture-fit',
+   desc:'Puts you at ease, asks about motivation and fit, gentle follow-ups.',
+   system:'You are a warm, encouraging HR recruiter conducting a job interview. You smile, nod, occasionally say things like "that\'s great to hear" and ask about motivation, culture fit, and career goals. You rarely challenge hard, but you do ask the candidate to be specific if they\'re vague. Keep responses to 1-3 sentences, like real spoken dialogue.'},
+  {id:'tech', name:'Technical Lead', role:'Engineering', tags:'precise · probing · detail-oriented',
+   desc:'Digs into how things actually worked. Wants specifics, not buzzwords.',
+   system:'You are a technical lead interviewing a candidate. You care about specifics: what exactly did they build, what tradeoffs did they make, what would they do differently. You interrupt vague answers with a clarifying question. You occasionally reference something they said earlier. Keep responses to 1-3 sentences, like real spoken dialogue.'},
+  {id:'exec', name:'Skeptical Executive', role:'Senior Leadership', tags:'terse · challenging · impact-focused',
+   desc:'Short questions, high scrutiny. Wants business impact and evidence.',
+   system:'You are a skeptical senior executive interviewing a candidate. You are terse, sometimes blunt, and push for measurable business impact. You challenge claims ("how do you know that actually worked?") and occasionally go quiet for a beat before responding. Keep responses to 1-2 sentences, like real spoken dialogue.'},
+  {id:'founder', name:'Startup Founder', role:'Founder / CEO', tags:'fast-paced · scrappy · big-picture',
+   desc:'Moves quickly, jumps topics, cares about ownership and speed.',
+   system:'You are a fast-talking startup founder interviewing a candidate. You jump between topics quickly, care about ownership, speed, and scrappiness, and occasionally go on a small tangent before returning to the question. Keep responses to 1-3 sentences, like real spoken dialogue.'},
+  {id:'quiet', name:'Quiet Observer', role:'Panel Member', tags:'reserved · minimal reactions · unnerving silence',
+   desc:'Says very little. Long pauses. Makes you fill the silence.',
+   system:'You are a quiet, reserved interviewer who says very little. You often just say "mm-hm" or "go on" or pause before a short follow-up. This can feel unnerving to the candidate. Keep responses to a few words to one short sentence.'}
+];
+
+/* ================= NAV ================= */
+const views = ['setup','interview','presentation','progress'];
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    views.forEach(v=>{
+      document.getElementById('view-'+v).classList.toggle('hidden', v!==btn.dataset.view);
+    });
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active', b===btn));
+    if(btn.dataset.view==='progress') renderProgress();
+  });
+});
+
+/* ================= SETUP VIEW ================= */
+const providerSelect = document.getElementById('providerSelect');
+const modelSelect = document.getElementById('modelSelect');
+const providerHint = document.getElementById('providerHint');
+const apiKeyInput = document.getElementById('apiKeyInput');
+const useProxyToggle = document.getElementById('useProxyToggle');
+const proxyUrlWrap = document.getElementById('proxyUrlWrap');
+const proxyUrlInput = document.getElementById('proxyUrlInput');
+const connStatus = document.getElementById('connStatus');
+
+function populateProviders(){
+  Object.keys(PROVIDERS).forEach(id=>{
+    const o = document.createElement('option');
+    o.value = id; o.textContent = PROVIDERS[id].label;
+    providerSelect.appendChild(o);
+  });
+  providerSelect.value = SETTINGS.providerId;
+  populateModels();
+  apiKeyInput.value = SETTINGS.apiKey || '';
+  useProxyToggle.checked = !!SETTINGS.useProxy;
+  proxyUrlInput.value = SETTINGS.proxyUrl || '/api/chat';
+  proxyUrlWrap.classList.toggle('hidden', !useProxyToggle.checked);
+  providerHint.textContent = PROVIDERS[SETTINGS.providerId].hint;
+}
+function populateModels(){
+  modelSelect.innerHTML = '';
+  const p = PROVIDERS[providerSelect.value];
+  p.models.forEach(m=>{
+    const o = document.createElement('option');
+    o.value = m.id; o.textContent = m.label;
+    modelSelect.appendChild(o);
+  });
+  if(providerSelect.value === SETTINGS.providerId && SETTINGS.model){
+    modelSelect.value = SETTINGS.model;
+  }
+  providerHint.textContent = p.hint;
+  const forceProxy = p.needsProxy;
+  useProxyToggle.checked = forceProxy || useProxyToggle.checked;
+  useProxyToggle.disabled = forceProxy;
+  proxyUrlWrap.classList.toggle('hidden', !useProxyToggle.checked);
+}
+providerSelect.addEventListener('change', populateModels);
+useProxyToggle.addEventListener('change', ()=> proxyUrlWrap.classList.toggle('hidden', !useProxyToggle.checked));
+
+function persistSettingsFromForm(){
+  SETTINGS.providerId = providerSelect.value;
+  SETTINGS.model = modelSelect.value;
+  SETTINGS.apiKey = apiKeyInput.value.trim();
+  SETTINGS.useProxy = useProxyToggle.checked;
+  SETTINGS.proxyUrl = proxyUrlInput.value.trim() || '/api/chat';
+}
+
+document.getElementById('saveKeyBtn').addEventListener('click', ()=>{
+  persistSettingsFromForm();
+  saveSettings(SETTINGS);
+  connStatus.innerHTML = '<span class="pill ok">Saved to this browser</span>';
+});
+document.getElementById('clearKeyBtn').addEventListener('click', ()=>{
+  SETTINGS.apiKey = '';
+  apiKeyInput.value = '';
+  saveSettings(SETTINGS);
+  connStatus.innerHTML = '<span class="pill">Key cleared</span>';
+});
+document.getElementById('testConnBtn').addEventListener('click', async ()=>{
+  persistSettingsFromForm();
+  saveSettings(SETTINGS);
+  connStatus.innerHTML = 'Testing…';
+  try{
+    const out = await callAI({system:'Reply with exactly one word: pong', messages:[{role:'user',content:'ping'}], maxTokens:10});
+    connStatus.innerHTML = '<span class="pill ok">Connected</span> — model replied: "' + out.trim().slice(0,60) + '"';
+  }catch(e){
+    connStatus.innerHTML = '<span class="pill bad">Failed</span> — ' + escapeHtml(e.message);
+  }
+});
+
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML;
+}
+
+populateProviders();
+
+/* ================= INTERVIEW MODULE ================= */
+let interviewState = null;
+
+const personaGrid = document.getElementById('personaGrid');
+PERSONAS.forEach(p=>{
+  const card = document.createElement('div');
+  card.className = 'persona-card';
+  card.dataset.id = p.id;
+  card.innerHTML = '<div class="p-name">'+p.name+'</div><div class="p-tags">'+p.tags+'</div><div class="p-desc">'+p.desc+'</div>';
+  card.addEventListener('click', ()=>{
+    document.querySelectorAll('.persona-card').forEach(c=>c.classList.remove('selected'));
+    card.classList.add('selected');
+    selectedPersonaId = p.id;
+  });
+  personaGrid.appendChild(card);
+});
+let selectedPersonaId = 'hr';
+personaGrid.firstChild.classList.add('selected');
+
+document.getElementById('genQuestionsBtn').addEventListener('click', async ()=>{
+  const cv = document.getElementById('cvInput').value.trim();
+  const jd = document.getElementById('jdInput').value.trim();
+  const notes = document.getElementById('notesInput').value.trim();
+  const difficulty = document.getElementById('difficultySelect').value;
+  const persona = PERSONAS.find(p=>p.id===selectedPersonaId);
+  if(!cv || !jd){ alert('Paste both your CV and the job description first.'); return; }
+
+  const btn = document.getElementById('genQuestionsBtn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  try{
+    const sys = 'You generate job interview question sets as strict JSON only, no commentary, no markdown fences. ' +
+      'Return: {"questions":[{"category":"behavioral|technical|situational|leadership|culture","text":"..."}]}. ' +
+      'Generate 16-20 questions tailored to the CV and job description, increasing in difficulty, matching a "'+difficulty+'" difficulty level.';
+    const userMsg = 'CV:\n'+cv+'\n\nJob description:\n'+jd+'\n\nExtra context:\n'+(notes||'none');
+    const raw = await callAI({system:sys, messages:[{role:'user',content:userMsg}], json:true, maxTokens:1800});
+    const parsed = parseJSONLoose(raw, null);
+    let questions = (parsed && Array.isArray(parsed.questions)) ? parsed.questions : null;
+    if(!questions || !questions.length){
+      questions = [
+        {category:'behavioral', text:'Tell me about a time you had to deliver under a tight deadline.'},
+        {category:'technical', text:'Walk me through a project from your CV that\'s most relevant to this role.'},
+        {category:'situational', text:'How would you handle disagreement with a manager\'s decision?'},
+        {category:'culture', text:'What kind of team environment brings out your best work?'}
+      ];
+    }
+    interviewState = {
+      persona, cv, jd, notes, difficulty,
+      questions, qIndex: 0,
+      calibration: [], calibIndex: 0,
+      transcript: [], notesLog: [],
+      startedAt: Date.now()
+    };
+    showCalibration();
+  }catch(e){
+    alert('Could not generate questions: ' + e.message);
+  }finally{
+    btn.disabled = false; btn.textContent = 'Generate my question set';
+  }
+});
+
+const CALIB_QS = [
+  'Tell me a bit about yourself and what brought you to this role.',
+  'Describe a project or piece of work you\'re genuinely proud of.',
+  'What\'s a strength you rely on, and a growth area you\'re working on?'
+];
+
+function showCalibration(){
+  document.getElementById('int-setup').classList.add('hidden');
+  document.getElementById('int-calibration').classList.remove('hidden');
+  document.getElementById('calibQuestion').textContent = CALIB_QS[0];
+}
+document.getElementById('calibNextBtn').addEventListener('click', ()=>{
+  const ans = document.getElementById('calibAnswer').value.trim();
+  if(!ans){ alert('Give a quick answer first.'); return; }
+  interviewState.calibration.push(ans);
+  interviewState.calibIndex++;
+  document.getElementById('calibAnswer').value = '';
+  if(interviewState.calibIndex < CALIB_QS.length){
+    document.getElementById('calibQuestion').textContent = CALIB_QS[interviewState.calibIndex];
+  } else {
+    document.getElementById('int-calibration').classList.add('hidden');
+    startLiveInterview();
+  }
+});
+wireMic('calibMicBtn','calibMicStatus','calibAnswer');
+
+function startLiveInterview(){
+  document.getElementById('int-live').classList.remove('hidden');
+  document.getElementById('interviewerName').textContent = interviewState.persona.name;
+  document.getElementById('interviewerRole').textContent = interviewState.persona.role;
+  document.getElementById('interviewerAvatar').innerHTML = avatarSVG(interviewState.persona.id, 'neutral');
+  updateQCounter();
+  askNextQueuedQuestion(true);
+}
+function updateQCounter(){
+  document.getElementById('qCounter').textContent = 'Question ' + Math.min(interviewState.qIndex+1, interviewState.questions.length) + ' of ' + interviewState.questions.length;
+}
+function avatarSVG(id, mood){
+  const colors = {hr:'#C9932B', tech:'#4F7C5A', exec:'#B3492F', founder:'#7C6FB0', quiet:'#5B7A96'};
+  const c = colors[id] || '#C9932B';
+  let mouth = 'M 20 34 Q 30 40 40 34';
+  if(mood==='smile') mouth = 'M 18 32 Q 30 44 42 32';
+  if(mood==='challenge') mouth = 'M 20 36 L 40 36';
+  if(mood==='silent') mouth = 'M 24 35 L 36 35';
+  return '<svg width="46" height="46" viewBox="0 0 60 60"><circle cx="30" cy="30" r="27" fill="'+c+'" opacity="0.85"/>' +
+    '<circle cx="22" cy="26" r="3" fill="#14171C"/><circle cx="38" cy="26" r="3" fill="#14171C"/>' +
+    '<path d="'+mouth+'" stroke="#14171C" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
+}
+
+function appendMsg(who, text, cls){
+  const t = document.getElementById('interviewTranscript');
+  const div = document.createElement('div');
+  div.className = 'msg ' + cls;
+  div.innerHTML = '<div class="who">'+who+'</div><div class="bubble">'+escapeHtml(text)+'</div>';
+  t.appendChild(div);
+  t.scrollTop = t.scrollHeight;
+}
+function appendObs(note){
+  if(!note) return;
+  const rail = document.getElementById('obsNotes');
+  const div = document.createElement('div');
+  div.className = 'obs-note';
+  div.textContent = note;
+  rail.prepend(div);
+  interviewState.notesLog.push(note);
+}
+
+function askNextQueuedQuestion(first){
+  if(interviewState.qIndex >= interviewState.questions.length){
+    finishInterview();
+    return;
+  }
+  const q = interviewState.questions[interviewState.qIndex];
+  appendMsg(interviewState.persona.name, q.text, 'interviewer');
+  interviewState.transcript.push({role:'interviewer', text:q.text, category:q.category, forQuestion:q.text});
+  updateQCounter();
+}
+
+document.getElementById('sendAnswerBtn').addEventListener('click', handleAnswer);
+async function handleAnswer(){
+  const box = document.getElementById('liveAnswer');
+  const answer = box.value.trim();
+  if(!answer) return;
+  appendMsg('You', answer, 'user');
+  interviewState.transcript.push({role:'user', text:answer});
+  box.value = '';
+  const sendBtn = document.getElementById('sendAnswerBtn');
+  sendBtn.disabled = true;
+
+  try{
+    const recent = interviewState.transcript.slice(-8).map(m=> (m.role==='user'?'Candidate: ':'Interviewer: ')+m.text).join('\n');
+    const sys = interviewState.persona.system + '\n\nYou are mid-interview, difficulty level "' + interviewState.difficulty + '". ' +
+      'Decide your next move given the candidate\'s latest answer. Respond as strict JSON only: ' +
+      '{"action":"follow_up|challenge|reference_earlier|silence_beat|next_question","message":"what you say out loud next","note":"one short private observation about the answer, e.g. \'vague on personal contribution\' or \'strong concrete metric\'"}. ' +
+      'Use "next_question" only if the current topic feels sufficiently explored. Keep "message" to 1-3 sentences.';
+    const raw = await callAI({system:sys, messages:[{role:'user', content: 'Recent conversation:\n'+recent+'\n\nRespond with the JSON described.'}], json:true, maxTokens:400});
+    const parsed = parseJSONLoose(raw, {action:'next_question', message:'', note:''});
+    appendObs(parsed.note);
+
+    if(parsed.action === 'next_question'){
+      interviewState.qIndex++;
+      if(parsed.message){ appendMsg(interviewState.persona.name, parsed.message, 'interviewer'); interviewState.transcript.push({role:'interviewer', text:parsed.message}); }
+      askNextQueuedQuestion(false);
+    } else {
+      const mood = parsed.action === 'challenge' ? 'challenge' : (parsed.action === 'silence_beat' ? 'silent' : 'neutral');
+      document.getElementById('interviewerAvatar').innerHTML = avatarSVG(interviewState.persona.id, mood);
+      const msg = parsed.message || '...';
+      appendMsg(interviewState.persona.name, msg, 'interviewer');
+      interviewState.transcript.push({role:'interviewer', text:msg});
+    }
+  }catch(e){
+    appendMsg('System', 'Could not reach the model (' + e.message + '). Moving to the next question.', 'note');
+    interviewState.qIndex++;
+    askNextQueuedQuestion(false);
+  }finally{
+    sendBtn.disabled = false;
+  }
+}
+wireMic('liveMicBtn','liveMicStatus','liveAnswer');
+
+document.getElementById('endInterviewBtn').addEventListener('click', finishInterview);
+
+async function finishInterview(){
+  document.getElementById('int-live').classList.add('hidden');
+  const reportDiv = document.getElementById('int-report');
+  reportDiv.classList.remove('hidden');
+  reportDiv.innerHTML = '<div class="card">Building your report…</div>';
+
+  const fullTranscript = interviewState.transcript.map(m=>(m.role==='user'?'Candidate: ':'Interviewer: ')+m.text).join('\n');
+  const calibSample = interviewState.calibration.join('\n---\n');
+  const userAnswersOnly = interviewState.transcript.filter(m=>m.role==='user').map(m=>m.text).join(' ');
+
+  let report = null;
+  try{
+    const sys = 'You are an expert workplace-communication coach reviewing a mock interview transcript. ' +
+      'Respond as strict JSON only, no markdown fences: {"scores":{"clarity":0-100,"structure":0-100,"confidence":0-100,"storytelling":0-100,"technicalDepth":0-100,"leadership":0-100},' +
+      '"overallSummary":"2-3 sentences","strengths":["..."],"improvementAreas":["..."],' +
+      '"perAnswer":[{"question":"...","whatWorked":"...","whatToImprove":"...","why":"...","improvedVersion":"a rewrite that keeps the candidate\'s own voice, vocabulary and phrasing style based on their calibration sample, just tighter and more confident"}]}. ' +
+      'Cover at most 6 of the strongest/weakest answers in perAnswer, not every single one. Base the improvedVersion tone closely on the calibration sample style — do not make it sound like generic AI copy.';
+    const userMsg = 'Calibration sample (their natural voice):\n'+calibSample+'\n\nFull interview transcript:\n'+fullTranscript;
+    const raw = await callAI({system:sys, messages:[{role:'user',content:userMsg}], json:true, maxTokens:2600});
+    report = parseJSONLoose(raw, null);
+  }catch(e){ /* fall through to local estimate */ }
+
+  if(!report || !report.scores){
+    const local = estimateScoresLocally(userAnswersOnly);
+    report = {
+      scores: local, estimatedLocally: true,
+      overallSummary: 'Automated scoring was unavailable, so this is a local estimate based on filler-word rate and sentence pacing only — treat it as a rough signal, not full coaching.',
+      strengths: [], improvementAreas: [],
+      perAnswer: []
+    };
+  }
+  renderInterviewReport(report);
+
+  addSession({
+    id: 'int_'+Date.now(), date: new Date().toISOString(), type: 'Interview',
+    persona: interviewState.persona.name,
+    headlineScore: Math.round(avgScore(report.scores)),
+    scores: report.scores
+  });
+}
+
+function avgScore(scores){
+  const keys = ['clarity','structure','confidence','storytelling','technicalDepth','leadership'];
+  const vals = keys.map(k=>scores[k]).filter(v=>typeof v === 'number');
+  return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+}
+
+function scoreBar(label, val){
+  val = clamp(Math.round(val||0),0,100);
+  return '<div class="score-row"><div class="score-label">'+label+'</div>' +
+    '<div class="score-bar-bg"><div class="score-bar-fill" style="width:'+val+'%"></div></div>' +
+    '<div class="score-num">'+val+'</div></div>';
+}
+
+function renderInterviewReport(report){
+  const s = report.scores;
+  let html = '<div class="card"><h2>Interview report'+(report.estimatedLocally?'<span class="badge-estimated">Estimated locally</span>':'')+'</h2>';
+  html += scoreBar('Clarity', s.clarity) + scoreBar('Structure', s.structure) + scoreBar('Confidence signal', s.confidence) +
+    scoreBar('Storytelling', s.storytelling) + scoreBar('Technical depth', s.technicalDepth) + scoreBar('Leadership language', s.leadership);
+  html += '<p style="margin-top:16px;font-size:14px;line-height:1.6;">'+escapeHtml(report.overallSummary||'')+'</p>';
+  if(report.strengths && report.strengths.length){
+    html += '<div class="row"><div><div class="review-grid"><div><div class="label">Strengths</div><ul>'+report.strengths.map(x=>'<li>'+escapeHtml(x)+'</li>').join('')+'</ul></div>' +
+      '<div><div class="label">Improvement areas</div><ul>'+(report.improvementAreas||[]).map(x=>'<li>'+escapeHtml(x)+'</li>').join('')+'</ul></div></div></div></div>';
+  }
+  html += '</div>';
+
+  if(report.perAnswer && report.perAnswer.length){
+    html += '<div class="card"><h2>Answer by answer</h2>';
+    report.perAnswer.forEach(a=>{
+      html += '<div class="answer-review"><div class="q">'+escapeHtml(a.question||'')+'</div>' +
+        '<div class="review-grid"><div><div class="label">What worked</div>'+escapeHtml(a.whatWorked||'')+'</div>' +
+        '<div><div class="label">What to improve</div>'+escapeHtml(a.whatToImprove||'')+'</div></div>' +
+        '<div style="margin-top:8px;font-size:13px;"><span class="label">Why</span> '+escapeHtml(a.why||'')+'</div>' +
+        (a.improvedVersion ? '<div class="improved-box"><strong>In your voice, tightened:</strong><br>'+escapeHtml(a.improvedVersion)+'</div>' : '') +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '<div class="btn-row"><button class="btn secondary" id="restartIntBtn">Practice again</button></div>';
+  document.getElementById('int-report').innerHTML = html;
+  document.getElementById('restartIntBtn').addEventListener('click', ()=>{
+    document.getElementById('int-report').classList.add('hidden');
+    document.getElementById('int-report').innerHTML = '';
+    document.getElementById('interviewTranscript').innerHTML = '';
+    document.getElementById('obsNotes').innerHTML = '';
+    document.getElementById('int-setup').classList.remove('hidden');
+  });
+}
+
+/* ================= PRESENTATION MODULE ================= */
+let presState = null;
+let presTimerHandle = null;
+let reactionHandle = null;
+
+document.getElementById('durationSelect').addEventListener('change', function(){
+  document.getElementById('customDuration').classList.toggle('hidden', this.value !== 'custom');
+});
+
+document.getElementById('startPresBtn').addEventListener('click', ()=>{
+  const notes = document.getElementById('presNotes').value.trim();
+  if(!notes){ alert('Paste or type your notes first.'); return; }
+  let duration = document.getElementById('durationSelect').value;
+  duration = duration === 'custom' ? (parseInt(document.getElementById('customDuration').value,10) || 300) : parseInt(duration,10);
+  const audience = document.getElementById('audienceSelect').value;
+  const reactionMode = document.getElementById('reactionMode').value;
+  const reactionInterval = parseInt(document.getElementById('reactionInterval').value,10);
+
+  presState = {
+    notes, duration, audience, reactionMode, reactionInterval,
+    elapsed: 0, overflowing: false, transcript: '', seatsCount: 8,
+    seatMoods: new Array(8).fill('neutral'), qa: []
+  };
+  document.getElementById('pres-setup').classList.add('hidden');
+  document.getElementById('pres-live').classList.remove('hidden');
+  buildSeats();
+  document.getElementById('audiencePill').textContent = audience.split('—')[0].trim();
+  document.getElementById('liveTranscriptBox').innerHTML = '';
+  setupSpeechSupportNote('speechSupportNote');
+
+  presTimerHandle = setInterval(()=>{
+    presState.elapsed++;
+    const timerEl = document.getElementById('presTimer');
+    timerEl.textContent = fmtTime(presState.elapsed);
+    if(presState.elapsed >= presState.duration){
+      presState.overflowing = true;
+      timerEl.classList.add('over');
+    }
+  }, 1000);
+
+  if(reactionMode === 'local' && reactionInterval > 0){
+    reactionHandle = setInterval(pulseLocalReactions, reactionInterval*1000);
+  } else if(reactionMode === 'ai' && reactionInterval > 0){
+    reactionHandle = setInterval(pulseAIReactions, reactionInterval*1000);
+  }
+});
+
+function fmtTime(sec){
+  const m = Math.floor(sec/60), s = sec%60;
+  return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+}
+
+const MOODS = ['engaged','curious','bored','smiling','confused','impressed','checking-phone','note-taking'];
+function faceSVGForMood(mood){
+  const map = {engaged:'#4F7C5A', curious:'#C9932B', bored:'#5B7A96', smiling:'#4F7C5A',
+    confused:'#B3492F', impressed:'#C9932B', 'checking-phone':'#5B7A96', 'note-taking':'#7C6FB0'};
+  const c = map[mood] || '#5B7A96';
+  let mouth = 'M 20 32 Q 30 36 40 32';
+  if(mood==='smiling'||mood==='impressed') mouth = 'M 18 30 Q 30 40 42 30';
+  if(mood==='bored'||mood==='checking-phone') mouth = 'M 20 34 L 40 34';
+  if(mood==='confused') mouth = 'M 20 33 Q 30 28 40 33';
+  return '<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="'+c+'" opacity="0.8"/>' +
+    '<circle cx="22" cy="27" r="3" fill="#14171C"/><circle cx="38" cy="27" r="3" fill="#14171C"/>' +
+    '<path d="'+mouth+'" stroke="#14171C" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
+}
+function buildSeats(){
+  const wrap = document.getElementById('seats');
+  wrap.innerHTML = '';
+  presState.seatMoods.forEach((mood,i)=>{
+    const s = document.createElement('div');
+    s.className = 'seat'; s.id = 'seat-'+i;
+    s.innerHTML = faceSVGForMood(mood) + '<div class="mood-label">'+mood+'</div>';
+    wrap.appendChild(s);
+  });
+}
+function setSeatMood(i, mood){
+  presState.seatMoods[i] = mood;
+  const s = document.getElementById('seat-'+i);
+  if(s) s.innerHTML = faceSVGForMood(mood) + '<div class="mood-label">'+mood+'</div>';
+}
+function pulseLocalReactions(){
+  const fillerRate = ((presState.transcript.match(FILLERS)||[]).length) / Math.max(1, presState.transcript.split(/\s+/).length);
+  const overtime = presState.overflowing;
+  for(let i=0;i<presState.seatsCount;i++){
+    let pool = ['engaged','curious','smiling','note-taking'];
+    if(fillerRate > 0.06) pool = pool.concat(['confused','bored']);
+    if(overtime) pool = pool.concat(['checking-phone','bored']);
+    const mood = pool[Math.floor(Math.random()*pool.length)];
+    if(Math.random() < 0.7) setSeatMood(i, mood);
+  }
+}
+async function pulseAIReactions(){
+  try{
+    const sys = 'You simulate an audience\'s live reactions during a presentation. Respond as strict JSON only: {"moods":["engaged"|"curious"|"bored"|"smiling"|"confused"|"impressed"|"checking-phone"|"note-taking", ... 8 total]}. Base it on the recent transcript snippet and the audience type given.';
+    const snippet = presState.transcript.split(/\s+/).slice(-120).join(' ');
+    const raw = await callAI({system:sys, messages:[{role:'user',content:'Audience type: '+presState.audience+'\nRecent snippet:\n'+snippet}], json:true, maxTokens:200});
+    const parsed = parseJSONLoose(raw, null);
+    if(parsed && Array.isArray(parsed.moods)){
+      parsed.moods.slice(0,8).forEach((m,i)=> setSeatMood(i, MOODS.includes(m) ? m : 'engaged'));
+    } else { pulseLocalReactions(); }
+  }catch(e){ pulseLocalReactions(); }
+}
+
+function appendLiveTranscript(text){
+  const box = document.getElementById('liveTranscriptBox');
+  const span = document.createElement('span');
+  span.textContent = text + ' ';
+  if(presState.overflowing) span.className = 'overflow-text';
+  box.appendChild(span);
+  box.scrollTop = box.scrollHeight;
+  presState.transcript += text + ' ';
+}
+
+document.getElementById('presTypeAddBtn').addEventListener('click', ()=>{
+  document.getElementById('presTypeInput').classList.remove('hidden');
+  document.getElementById('presTypeAddRow').classList.remove('hidden');
+});
+document.getElementById('presTypeCommit').addEventListener('click', ()=>{
+  const t = document.getElementById('presTypeInput').value.trim();
+  if(t){ appendLiveTranscript(t); }
+  document.getElementById('presTypeInput').value = '';
+});
+
+document.getElementById('endPresBtn').addEventListener('click', endPresentation);
+
+async function endPresentation(){
+  clearInterval(presTimerHandle); clearInterval(reactionHandle);
+  stopAnyRecognition();
+  document.getElementById('pres-live').classList.add('hidden');
+  document.getElementById('pres-qa').classList.remove('hidden');
+  const qaArea = document.getElementById('qaArea');
+  qaArea.innerHTML = 'Generating audience questions…';
+
+  try{
+    const sys = 'Generate 3-4 realistic audience follow-up questions grounded in the transcript given, for this audience: '+presState.audience+'. ' +
+      'Respond as strict JSON only: {"questions":[{"text":"...","expected":"quick|standard|detailed"}]}. quick≈3 min, standard≈5 min, detailed≈10 min answers.';
+    const raw = await callAI({system:sys, messages:[{role:'user',content:'Transcript:\n'+presState.transcript}], json:true, maxTokens:600});
+    const parsed = parseJSONLoose(raw, null);
+    presState.qa = (parsed && parsed.questions) ? parsed.questions : [
+      {text:'Can you say more about the biggest risk here?', expected:'standard'},
+      {text:'What would you do differently next time?', expected:'quick'}
+    ];
+  }catch(e){
+    presState.qa = [{text:'What was the key takeaway you want us to remember?', expected:'quick'}];
+  }
+  renderQA();
+}
+
+function renderQA(){
+  const qaArea = document.getElementById('qaArea');
+  qaArea.innerHTML = '';
+  presState.qa.forEach((q,i)=>{
+    const lenSec = {quick:180, standard:300, detailed:600}[q.expected] || 180;
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.style.background = 'var(--panel-2)';
+    div.innerHTML = '<div style="font-family:var(--font-display);font-size:15px;margin-bottom:8px;">'+escapeHtml(q.text)+'</div>' +
+      '<div class="hint">Expected length: '+q.expected+' (~'+Math.round(lenSec/60)+' min)</div>' +
+      '<textarea rows="3" data-qi="'+i+'" class="qa-answer" placeholder="Your answer..."></textarea>';
+    qaArea.appendChild(div);
+  });
+  const btn = document.createElement('button');
+  btn.className = 'btn'; btn.textContent = 'Get my report';
+  btn.style.marginTop = '10px';
+  btn.addEventListener('click', finishPresentation);
+  qaArea.appendChild(btn);
+}
+
+async function finishPresentation(){
+  const answers = Array.from(document.querySelectorAll('.qa-answer')).map(t=>t.value.trim());
+  document.getElementById('pres-qa').classList.add('hidden');
+  const reportDiv = document.getElementById('pres-report');
+  reportDiv.classList.remove('hidden');
+  reportDiv.innerHTML = '<div class="card">Building your report…</div>';
+
+  const words = presState.transcript.trim().split(/\s+/).filter(Boolean);
+  const wpm = presState.elapsed > 0 ? Math.round(words.length / (presState.elapsed/60)) : 0;
+  const fillerCount = (presState.transcript.match(FILLERS)||[]).length;
+
+  let report = null;
+  try{
+    const sys = 'You are a public-speaking coach reviewing a presentation transcript and Q&A. Respond as strict JSON only: ' +
+      '{"scores":{"clarity":0-100,"pacing":0-100,"confidence":0-100,"structure":0-100,"engagement":0-100},' +
+      '"strongestMoment":"quote or paraphrase + why","weakestMoment":"quote or paraphrase + why",' +
+      '"suggestedRewrites":[{"original":"...","rewrite":"...","why":"..."}],"overallSummary":"2-3 sentences"}. ' +
+      'Give at most 3 suggestedRewrites, focused on the weakest lines.';
+    const userMsg = 'Audience: '+presState.audience+'\nTime limit: '+presState.duration+'s, actual: '+presState.elapsed+'s\nWords per minute: '+wpm+'\nFiller words: '+fillerCount+
+      '\n\nTranscript:\n'+presState.transcript+'\n\nQ&A answers:\n'+answers.join('\n');
+    const raw = await callAI({system:sys, messages:[{role:'user',content:userMsg}], json:true, maxTokens:1800});
+    report = parseJSONLoose(raw, null);
+  }catch(e){ /* fall to local */ }
+
+  if(!report || !report.scores){
+    const local = estimateScoresLocally(presState.transcript);
+    report = {
+      scores: {clarity:local.clarity, pacing: clamp(100-Math.abs(wpm-140),20,95), confidence:local.confidence, structure:local.structure, engagement:60},
+      estimatedLocally: true,
+      overallSummary: 'Automated scoring was unavailable, so this is a local estimate from pacing and filler-word rate only.',
+      strongestMoment: '', weakestMoment: '', suggestedRewrites: []
+    };
+  }
+  renderPresReport(report, wpm, fillerCount);
+
+  addSession({
+    id: 'pres_'+Date.now(), date: new Date().toISOString(), type: 'Presentation',
+    audience: presState.audience.split('—')[0].trim(),
+    headlineScore: Math.round(avgScore(report.scores)),
+    scores: report.scores
+  });
+}
+
+function renderPresReport(report, wpm, fillerCount){
+  const s = report.scores;
+  let html = '<div class="card"><h2>Presentation report'+(report.estimatedLocally?'<span class="badge-estimated">Estimated locally</span>':'')+'</h2>';
+  html += scoreBar('Clarity', s.clarity) + scoreBar('Pacing', s.pacing) + scoreBar('Confidence', s.confidence) + scoreBar('Structure', s.structure) + scoreBar('Engagement', s.engagement);
+  html += '<div class="row" style="margin-top:14px;">' +
+    '<div class="pill">'+wpm+' words/min</div><div class="pill">'+fillerCount+' filler words</div>' +
+    '<div class="pill">'+fmtTime(presState.elapsed)+' spoken vs '+fmtTime(presState.duration)+' limit</div></div>';
+  html += '<p style="margin-top:16px;font-size:14px;line-height:1.6;">'+escapeHtml(report.overallSummary||'')+'</p>';
+  if(report.strongestMoment) html += '<div class="review-grid"><div><div class="label">Strongest moment</div>'+escapeHtml(report.strongestMoment)+'</div><div><div class="label">Weakest moment</div>'+escapeHtml(report.weakestMoment||'')+'</div></div>';
+  html += '</div>';
+
+  if(report.suggestedRewrites && report.suggestedRewrites.length){
+    html += '<div class="card"><h2>Suggested rewrites</h2>';
+    report.suggestedRewrites.forEach(r=>{
+      html += '<div class="answer-review"><div class="review-grid"><div><div class="label">Original</div>'+escapeHtml(r.original||'')+'</div>' +
+        '<div><div class="label">Why</div>'+escapeHtml(r.why||'')+'</div></div>' +
+        '<div class="improved-box">'+escapeHtml(r.rewrite||'')+'</div></div>';
+    });
+    html += '</div>';
+  }
+  html += '<div class="btn-row"><button class="btn secondary" id="restartPresBtn">Rehearse again</button></div>';
+  document.getElementById('pres-report').innerHTML = html;
+  document.getElementById('restartPresBtn').addEventListener('click', ()=>{
+    document.getElementById('pres-report').classList.add('hidden');
+    document.getElementById('pres-report').innerHTML = '';
+    document.getElementById('pres-setup').classList.remove('hidden');
+  });
+}
+
+/* ================= SPEECH (Web Speech API, optional) ================= */
+let recognitionInstance = null;
+let recognitionTarget = null; // {mode:'textarea', el} or {mode:'live'}
+
+function speechSupported(){
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+function setupSpeechSupportNote(elId){
+  const el = document.getElementById(elId);
+  if(el) el.textContent = speechSupported() ? '' : 'Live speech-to-text isn\u2019t supported in this browser — type your lines instead (works fully in Chrome/Edge).';
+}
+function wireMic(btnId, statusId, targetTextareaId){
+  const btn = document.getElementById(btnId);
+  btn.addEventListener('click', ()=>{
+    if(!speechSupported()){
+      document.getElementById(statusId).textContent = 'Not supported in this browser — try Chrome or Edge.';
+      return;
+    }
+    if(recognitionInstance && recognitionTarget && recognitionTarget.el && recognitionTarget.el.id === targetTextareaId){
+      stopAnyRecognition();
+      btn.classList.remove('live'); btn.textContent = '🎤 Speak instead';
+      return;
+    }
+    startRecognitionToTextarea(document.getElementById(targetTextareaId));
+    btn.classList.add('live'); btn.textContent = '⏹ Stop';
+    document.getElementById(statusId).textContent = 'Listening…';
+  });
+}
+function startRecognitionToTextarea(el){
+  stopAnyRecognition();
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognitionInstance = new Ctor();
+  recognitionInstance.continuous = true;
+  recognitionInstance.interimResults = false;
+  recognitionInstance.onresult = (ev)=>{
+    let text = '';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){ text += ev.results[i][0].transcript; }
+    el.value = (el.value ? el.value + ' ' : '') + text.trim();
+  };
+  recognitionInstance.onerror = ()=>{};
+  recognitionTarget = {el};
+  recognitionInstance.start();
+}
+function stopAnyRecognition(){
+  if(recognitionInstance){ try{ recognitionInstance.stop(); }catch(e){} recognitionInstance = null; }
+  recognitionTarget = null;
+}
+document.getElementById('presMicBtn').addEventListener('click', ()=>{
+  const btn = document.getElementById('presMicBtn');
+  if(!speechSupported()){ document.getElementById('speechSupportNote').textContent = 'Live speech-to-text isn\u2019t supported — use "Type a line instead".'; return; }
+  if(recognitionInstance && recognitionTarget && recognitionTarget.mode === 'pres'){
+    stopAnyRecognition();
+    btn.classList.remove('live'); btn.textContent = '🎤 Start speaking';
+    return;
+  }
+  stopAnyRecognition();
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognitionInstance = new Ctor();
+  recognitionInstance.continuous = true;
+  recognitionInstance.interimResults = false;
+  recognitionInstance.onresult = (ev)=>{
+    let text = '';
+    for(let i=ev.resultIndex;i<ev.results.length;i++){ text += ev.results[i][0].transcript + ' '; }
+    if(text.trim()) appendLiveTranscript(text.trim());
+  };
+  recognitionInstance.onerror = ()=>{};
+  recognitionTarget = {mode:'pres'};
+  recognitionInstance.start();
+  btn.classList.add('live'); btn.textContent = '⏹ Stop speaking';
+});
+
+/* ================= PROGRESS VIEW ================= */
+function renderProgress(){
+  const list = loadSessions();
+  const el = document.getElementById('progressList');
+  if(!list.length){ el.innerHTML = '<p class="hint" style="margin:0;">No sessions yet — finish an interview or presentation and it\'ll show up here.</p>'; return; }
+  el.innerHTML = list.map(s=>{
+    return '<div class="session-row"><div><strong>'+s.type+'</strong> — '+escapeHtml(s.persona||s.audience||'')+
+      '<div class="session-meta">'+new Date(s.date).toLocaleString()+'</div></div><div class="pill">'+s.headlineScore+'/100</div></div>';
+  }).join('');
+}
+
+})();
+</script>
+</body>
+</html>
