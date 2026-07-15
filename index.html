@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Room — Workplace Communication Simulator</title>
+<style>
+  :root{
+    --ink:#14171C; --panel:#1B1F26; --panel-2:#232833; --line:#2E3440;
+    --paper:#F2EDE3; --paper-dim:#DCD5C4;
+    --brass:#C9932B; --brass-dim:#8F6A20;
+    --signal:#4F7C5A; --signal-dim:#345740;
+    --alert:#B3492F; --alert-dim:#7D3220;
+    --text:#EDEAE2; --text-soft:#A9AEB8;
+    --font-display: Georgia, 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--ink);color:var(--text);font-family:var(--font-body);}
+  body{min-height:100vh;}
+  ::selection{background:var(--brass);color:var(--ink);}
+  a{color:var(--brass);}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+  .hidden{display:none !important;}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px;}
+
+  /* ---- top bar ---- */
+  header.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(20,23,28,.92);backdrop-filter:blur(6px);z-index:50;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand-mark{width:11px;height:11px;border-radius:50%;background:var(--brass);box-shadow:0 0 8px var(--brass);}
+  .brand-name{font-family:var(--font-display);font-size:20px;letter-spacing:.03em;}
+  .brand-sub{font-size:11px;color:var(--text-soft);letter-spacing:.08em;text-transform:uppercase;margin-left:6px;}
+  nav.tabs{display:flex;gap:4px;flex-wrap:wrap;}
+  nav.tabs button{background:none;border:1px solid transparent;color:var(--text-soft);padding:8px 14px;border-radius:5px;font-size:13.5px;letter-spacing:.02em;}
+  nav.tabs button:hover{color:var(--text);}
+  nav.tabs button.active{color:var(--paper);border-color:var(--line);background:var(--panel-2);}
+
+  main{padding:34px 0 80px;}
+  h1.page-title{font-family:var(--font-display);font-size:30px;margin:0 0 4px;font-weight:400;}
+  p.page-sub{color:var(--text-soft);margin:0 0 26px;font-size:14.5px;max-width:640px;line-height:1.5;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;margin-bottom:18px;}
+  .card h2{font-family:var(--font-display);font-weight:400;font-size:19px;margin:0 0 14px;}
+  label{display:block;font-size:12.5px;color:var(--text-soft);margin:14px 0 6px;letter-spacing:.02em;}
+  label:first-child{margin-top:0;}
+  input[type=text],input[type=password],input[type=number],select,textarea{
+    width:100%;background:var(--ink);border:1px solid var(--line);color:var(--text);
+    border-radius:6px;padding:10px 12px;font-size:14px;outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--brass);}
+  textarea{resize:vertical;line-height:1.5;}
+  .row{display:flex;gap:14px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:200px;}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--brass);color:var(--ink);border:none;
+    padding:11px 20px;border-radius:6px;font-size:14px;font-weight:600;letter-spacing:.01em;}
+  .btn:hover{background:#dba53a;}
+  .btn.secondary{background:var(--panel-2);color:var(--text);border:1px solid var(--line);}
+  .btn.secondary:hover{border-color:var(--brass);}
+  .btn.danger{background:var(--alert);color:var(--paper);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;}
+  .pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--text-soft);letter-spacing:.03em;}
+  .pill.ok{border-color:var(--signal);color:var(--signal);}
+  .pill.bad{border-color:var(--alert);color:var(--alert);}
+  .hint{font-size:12px;color:var(--text-soft);margin-top:6px;line-height:1.5;}
+  .status-line{margin-top:14px;font-size:13px;}
+
+  /* persona / audience cards */
+  .persona-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;}
+  .persona-card{border:1px solid var(--line);border-radius:8px;padding:14px;cursor:pointer;background:var(--panel-2);transition:border-color .15s;}
+  .persona-card:hover{border-color:var(--brass-dim);}
+  .persona-card.selected{border-color:var(--brass);box-shadow:0 0 0 1px var(--brass);}
+  .persona-card .p-name{font-family:var(--font-display);font-size:16px;margin-bottom:4px;}
+  .persona-card .p-tags{font-size:11px;color:var(--text-soft);}
+  .persona-card .p-desc{font-size:12.5px;color:var(--text-soft);margin-top:8px;line-height:1.4;}
+
+  /* interview stage */
+  .stage{display:grid;grid-template-columns:1fr 220px;gap:16px;}
+  @media(max-width:760px){.stage{grid-template-columns:1fr;}}
+  .interviewer-panel{background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:10px;padding:20px;position:relative;overflow:hidden;}
+  .interviewer-panel::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 40%,rgba(201,147,43,.06) 50%,transparent 60%);pointer-events:none;}
+  .avatar-row{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+  .avatar-name{font-family:var(--font-display);font-size:18px;}
+  .avatar-role{font-size:12px;color:var(--text-soft);}
+  .rec-dot{width:8px;height:8px;border-radius:50%;background:var(--alert);animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+  .qcount{font-size:12px;color:var(--text-soft);margin-top:2px;}
+  .transcript{margin-top:16px;max-height:340px;overflow-y:auto;padding-right:4px;}
+  .msg{margin-bottom:14px;font-size:14.5px;line-height:1.55;}
+  .msg .who{font-size:11px;color:var(--text-soft);letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px;}
+  .msg.interviewer .bubble{background:var(--panel-2);border:1px solid var(--line);padding:10px 13px;border-radius:8px;display:inline-block;}
+  .msg.user .bubble{background:var(--brass-dim);color:#fff3de;padding:10px 13px;border-radius:8px;display:inline-block;}
+  .msg.note .bubble{font-family:var(--font-mono);font-size:11.5px;color:var(--text-soft);}
+  .answer-box{margin-top:16px;}
+  .mic-row{display:flex;gap:8px;align-items:center;margin-top:8px;}
+  .mic-btn{background:var(--panel-2);border:1px solid var(--line);color:var(--text);border-radius:20px;padding:8px 14px;font-size:13px;}
+  .mic-btn.live{border-color:var(--alert);color:var(--alert);}
+  .observation-rail{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;}
+  .observation-rail h3{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:var(--text-soft);text-transform:uppercase;margin:0 0 10px;display:flex;align-items:center;gap:6px;}
+  .obs-note{font-size:12px;color:var(--text-soft);border-left:2px solid var(--brass-dim);padding-left:8px;margin-bottom:10px;line-height:1.4;}
+
+  /* presentation stage */
+  .timer-display{font-family:var(--font-mono);font-size:34px;letter-spacing:.02em;}
+  .timer-display.over{color:var(--alert);}
+  .seats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0;}
+  .seat{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;}
+  .seat svg{width:44px;height:44px;}
+  .seat .mood-label{font-size:10px;color:var(--text-soft);margin-top:4px;text-transform:capitalize;}
+  .live-transcript{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:14px;min-height:120px;max-height:260px;overflow-y:auto;font-size:14px;line-height:1.6;}
+  .overflow-text{color:var(--alert);}
+
+  /* reports */
+  .score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .score-label{width:150px;font-size:13px;color:var(--text-soft);flex-shrink:0;}
+  .score-bar-bg{flex:1;height:8px;background:var(--panel-2);border-radius:5px;overflow:hidden;}
+  .score-bar-fill{height:100%;background:linear-gradient(90deg,var(--brass-dim),var(--brass));}
+  .score-num{font-family:var(--font-mono);font-size:12.5px;width:34px;text-align:right;color:var(--text-soft);}
+  .answer-review{border-top:1px solid var(--line);padding:16px 0;}
+  .answer-review:first-child{border-top:none;padding-top:0;}
+  .answer-review .q{font-family:var(--font-display);font-size:15.5px;margin-bottom:8px;}
+  .review-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;}
+  @media(max-width:700px){.review-grid{grid-template-columns:1fr;}}
+  .review-grid .label{color:var(--brass);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+  .improved-box{background:var(--panel-2);border-left:2px solid var(--signal);padding:10px 13px;border-radius:0 6px 6px 0;font-size:13.5px;line-height:1.5;margin-top:6px;}
+  .badge-estimated{font-size:10.5px;color:var(--alert);border:1px solid var(--alert-dim);padding:2px 7px;border-radius:10px;margin-left:8px;}
+
+  /* progress */
+  .session-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .session-row:last-child{border-bottom:none;}
+  .session-meta{color:var(--text-soft);font-size:12px;}
+
+  footer{border-top:1px solid var(--line);padding:26px 0;color:var(--text-soft);font-size:12px;text-align:center;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">The Room</span>
+      <span class="brand-sub">Communication Simulator</span>
+    </div>
+    <nav class="tabs">
+      <button data-view="setup" class="active">Setup</button>
+      <button data-view="interview">Interview</button>
+      <button data-view="presentation">Presentation</button>
+      <button data-view="progress">Progress</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ SETUP ============ -->
+  <section id="view-setup">
+    <h1 class="page-title">Connect a model</h1>
+    <p class="page-sub">Pick an AI provider and drop in your own API key. It stays in this browser — nothing is sent anywhere except straight to the provider (or through your own proxy, for providers that block browser requests).</p>
+
+    <div class="card">
+      <h2>Provider</h2>
+      <label>Provider</label>
+      <select id="providerSelect"></select>
+      <div class="hint" id="providerHint"></div>
+
+      <label>Model</label>
+      <select id="modelSelect"></select>
+
+      <label>API key</label>
+      <input type="password" id="apiKeyInput" placeholder="Paste your key">
+      <div class="hint">Stored only in this browser's local storage. Clear it any time with the button below.</div>
+
+      <label style="margin-top:18px;">
+        <input type="checkbox" id="useProxyToggle" style="width:auto;display:inline-block;margin-right:8px;vertical-align:middle;">
+        Route through my Vercel proxy (needed for Groq and Anthropic — browsers block direct calls to them)
+      </label>
+      <div id="proxyUrlWrap" class="hidden">
+        <label>Proxy URL</label>
+        <input type="text" id="proxyUrlInput" placeholder="/api/chat  (default if deployed alongside this file)" value="/api/chat">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="testConnBtn">Test connection</button>
+        <button class="btn secondary" id="saveKeyBtn">Save to this browser</button>
+        <button class="btn secondary" id="clearKeyBtn">Clear saved key</button>
+      </div>
+      <div class="status-line" id="connStatus"></div>
+      <div class="hint">Groq and Anthropic route through the proxy and won't connect from an in-chat preview — deploy first (see README), then test on the real URL.</div>
+    </div>
+
+    <div class="card">
+      <h2>Which provider should I use?</h2>
+      <p class="hint" style="margin-top:0;">
+        <strong>Groq (default, open-source, free)</strong> — no credit card, roughly 30 requests/min and up to ~1,000–14,400 requests/day depending on the model. <strong>Llama 3.3 70B Versatile</strong> is the best balance of quota and quality for this app. <strong>Kimi K2</strong> on Groq is the closest open-weight model to Claude Sonnet on reasoning/code benchmarks, but it has a smaller quota and is occasionally pulled from the free catalog — treat it as a step-up option, not the default.<br><br>
+        <strong>Gemini</strong> has a free daily quota too (flash-lite stretches it furthest) but enabling billing removes the wall if you want this as a daily driver.<br><br>
+        <strong>OpenAI / Anthropic</strong> are paid-only, no free tier — use them if you already have credits and want the strongest possible coaching quality.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ INTERVIEW ============ -->
+  <section id="view-interview" class="hidden">
+    <h1 class="page-title">Interview Simulator</h1>
+    <p class="page-sub">Paste your CV and the job description, pick who's interviewing you, and go.</p>
+
+    <div id="int-setup">
+      <div class="card">
+        <h2>1. Materials</h2>
+        <label>Your CV / résumé (paste as text)</label>
+        <textarea id="cvInput" rows="6" placeholder="Paste your CV text here..."></textarea>
+        <label>Job description</label>
+        <textarea id="jdInput" rows="6" placeholder="Paste the job description here..."></textarea>
+        <label>Anything else worth knowing? (optional)</label>
+        <textarea id="notesInput" rows="2" placeholder="e.g. this is a promotion interview, I'm nervous about salary talk, etc."></textarea>
+        <div class="hint">This app reads pasted text only — no PDF/DOCX parsing yet. Copy-paste from your file works fine.</div>
+      </div>
+
+      <div class="card">
+        <h2>2. Who's interviewing you</h2>
+        <div class="persona-grid" id="personaGrid"></div>
+      </div>
+
+      <div class="card">
+        <h2>3. Difficulty</h2>
+        <select id="difficultySelect">
+          <option value="warmup">Warm-up — supportive, few curveballs</option>
+          <option value="standard" selected>Standard — realistic pushback</option>
+          <option value="tough">Tough — challenges assumptions, digs for evidence</option>
+        </select>
+        <div class="btn-row">
+          <button class="btn" id="genQuestionsBtn">Generate my question set</button>
+        </div>
+        <div class="hint">Generates a tailored set (not all 150 at once — a focused batch keeps quality and quota sane; you can generate more later).</div>
+      </div>
+    </div>
+
+    <div id="int-calibration" class="hidden">
+      <div class="card">
+        <h2>Calibration round</h2>
+        <p class="hint" style="margin-top:0;">Three quick warm-ups so the coaching sounds like <em>you</em>, not a generic AI rewrite. Answer naturally.</p>
+        <div id="calibQuestion" style="font-family:var(--font-display);font-size:16px;margin:14px 0 8px;"></div>
+        <textarea id="calibAnswer" rows="4" placeholder="Type your answer..."></textarea>
+        <div class="mic-row">
+          <button class="mic-btn" id="calibMicBtn">🎤 Speak instead</button>
+          <span class="hint" id="calibMicStatus"></span>
+        </div>
+        <div class="btn-row"><button class="btn" id="calibNextBtn">Next</button></div>
+      </div>
+    </div>
+
+    <div id="int-live" class="hidden">
+      <div class="stage">
+        <div class="interviewer-panel">
+          <div class="avatar-row">
+            <div id="interviewerAvatar"></div>
+            <div>
+              <div class="avatar-name" id="interviewerName"></div>
+              <div class="avatar-role" id="interviewerRole"></div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+              <span class="rec-dot"></span><span style="font-size:11px;color:var(--text-soft);">LIVE</span>
+            </div>
+          </div>
+          <div class="qcount" id="qCounter"></div>
+          <div class="transcript" id="interviewTranscript"></div>
+          <div class="answer-box">
+            <textarea id="liveAnswer" rows="3" placeholder="Type your answer..."></textarea>
+            <div class="mic-row">
+              <button class="mic-btn" id="liveMicBtn">🎤 Speak instead</button>
+              <span class="hint" id="liveMicStatus"></span>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="sendAnswerBtn">Send answer</button>
+              <button class="btn danger" id="endInterviewBtn">End interview</button>
+            </div>
+          </div>
+        </div>
+        <div class="observation-rail">
+          <h3><span class="rec-dot" style="animation:none;background:var(--brass);"></span> Observing</h3>
+          <div id="obsNotes"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="int-report" class="hidden"></div>
+  </section>
+
+  <!-- ============ PRESENTATION ============ -->
+  <section id="view-presentation" class="hidden">
+    <h1 class="page-title">Presentation Studio</h1>
+    <p class="page-sub">Bring your notes, pick an audience, and rehearse out loud (or by typing).</p>
+
+    <div id="pres-setup">
+      <div class="card">
+        <h2>1. Your material</h2>
+        <textarea id="presNotes" rows="8" placeholder="Paste your notes, outline, or talking points..."></textarea>
+      </div>
+      <div class="card">
+        <h2>2. Format</h2>
+        <div class="row">
+          <div>
+            <label>Duration</label>
+            <select id="durationSelect">
+              <option value="180">Quick update — 3 min</option>
+              <option value="300" selected>Daily stand-up — 5 min</option>
+              <option value="600">Project brief — 10 min</option>
+              <option value="1200">Technical presentation — 20 min</option>
+              <option value="custom">Custom</option>
+            </select>
+            <input type="number" id="customDuration" class="hidden" placeholder="Seconds" style="margin-top:8px;">
+          </div>
+          <div>
+            <label>Audience</label>
+            <select id="audienceSelect">
+              <option value="Executive board — terse, impact-focused, interrupts with numbers questions">Executive board</option>
+              <option value="Team meeting — casual, supportive, occasional tangents" selected>Team meeting</option>
+              <option value="Investor pitch — skeptical, ROI-focused, tough Q&A">Investor pitch</option>
+              <option value="Conference room — mixed engagement, some distracted">Conference / stakeholder room</option>
+              <option value="Classroom — curious, asks clarifying basics">Classroom / teaching</option>
+            </select>
+          </div>
+        </div>
+        <label>Audience reactions</label>
+        <select id="reactionMode">
+          <option value="local">Local — instant, free, no API calls (default)</option>
+          <option value="ai">AI-grounded — calls your model every interval, uses more quota</option>
+        </select>
+        <div class="row" id="reactionIntervalWrap">
+          <div>
+            <label>Reaction interval</label>
+            <select id="reactionInterval">
+              <option value="15">Every 15s</option>
+              <option value="30" selected>Every 30s</option>
+              <option value="60">Every 60s (very frugal)</option>
+              <option value="0">Off</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn" id="startPresBtn">Step on stage</button></div>
+      </div>
+    </div>
+
+    <div id="pres-live" class="hidden">
+      <div class="card">
+        <div class="row" style="align-items:center;">
+          <div><span class="timer-display" id="presTimer">00:00</span></div>
+          <div style="text-align:right;"><span class="pill" id="audiencePill"></span></div>
+        </div>
+        <div class="seats" id="seats"></div>
+        <div c
