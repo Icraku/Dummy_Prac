@@ -349,4 +349,248 @@
           <div style="text-align:right;"><span class="pill" id="audiencePill"></span></div>
         </div>
         <div class="seats" id="seats"></div>
+        <div c  .seat{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center;}
+  .seat svg{width:44px;height:44px;}
+  .seat .mood-label{font-size:10px;color:var(--text-soft);margin-top:4px;text-transform:capitalize;}
+  .live-transcript{background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:14px;min-height:120px;max-height:260px;overflow-y:auto;font-size:14px;line-height:1.6;}
+  .overflow-text{color:var(--alert);}
+
+  /* reports */
+  .score-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .score-label{width:150px;font-size:13px;color:var(--text-soft);flex-shrink:0;}
+  .score-bar-bg{flex:1;height:8px;background:var(--panel-2);border-radius:5px;overflow:hidden;}
+  .score-bar-fill{height:100%;background:linear-gradient(90deg,var(--brass-dim),var(--brass));}
+  .score-num{font-family:var(--font-mono);font-size:12.5px;width:34px;text-align:right;color:var(--text-soft);}
+  .answer-review{border-top:1px solid var(--line);padding:16px 0;}
+  .answer-review:first-child{border-top:none;padding-top:0;}
+  .answer-review .q{font-family:var(--font-display);font-size:15.5px;margin-bottom:8px;}
+  .review-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:13px;}
+  @media(max-width:700px){.review-grid{grid-template-columns:1fr;}}
+  .review-grid .label{color:var(--brass);font-size:11px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+  .improved-box{background:var(--panel-2);border-left:2px solid var(--signal);padding:10px 13px;border-radius:0 6px 6px 0;font-size:13.5px;line-height:1.5;margin-top:6px;}
+  .badge-estimated{font-size:10.5px;color:var(--alert);border:1px solid var(--alert-dim);padding:2px 7px;border-radius:10px;margin-left:8px;}
+
+  /* progress */
+  .session-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .session-row:last-child{border-bottom:none;}
+  .session-meta{color:var(--text-soft);font-size:12px;}
+
+  footer{border-top:1px solid var(--line);padding:26px 0;color:var(--text-soft);font-size:12px;text-align:center;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">The Room</span>
+      <span class="brand-sub">Communication Simulator</span>
+    </div>
+    <nav class="tabs">
+      <button data-view="setup" class="active">Setup</button>
+      <button data-view="interview">Interview</button>
+      <button data-view="presentation">Presentation</button>
+      <button data-view="progress">Progress</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ SETUP ============ -->
+  <section id="view-setup">
+    <h1 class="page-title">Connect a model</h1>
+    <p class="page-sub">Pick an AI provider and drop in your own API key. It stays in this browser — nothing is sent anywhere except straight to the provider (or through your own proxy, for providers that block browser requests).</p>
+
+    <div class="card">
+      <h2>Provider</h2>
+      <label>Provider</label>
+      <select id="providerSelect"></select>
+      <div class="hint" id="providerHint"></div>
+
+      <label>Model</label>
+      <select id="modelSelect"></select>
+
+      <label>API key</label>
+      <input type="password" id="apiKeyInput" placeholder="Paste your key">
+      <div class="hint">Stored only in this browser's local storage. Clear it any time with the button below.</div>
+
+      <label style="margin-top:18px;">
+        <input type="checkbox" id="useProxyToggle" style="width:auto;display:inline-block;margin-right:8px;vertical-align:middle;">
+        Route through my Vercel proxy (needed for Groq and Anthropic — browsers block direct calls to them)
+      </label>
+      <div id="proxyUrlWrap" class="hidden">
+        <label>Proxy URL</label>
+        <input type="text" id="proxyUrlInput" placeholder="/api/chat  (default if deployed alongside this file)" value="/api/chat">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="testConnBtn">Test connection</button>
+        <button class="btn secondary" id="saveKeyBtn">Save to this browser</button>
+        <button class="btn secondary" id="clearKeyBtn">Clear saved key</button>
+      </div>
+      <div class="status-line" id="connStatus"></div>
+      <div class="hint">Groq and Anthropic route through the proxy and won't connect from an in-chat preview — deploy first (see README), then test on the real URL.</div>
+    </div>
+
+    <div class="card">
+      <h2>Which provider should I use?</h2>
+      <p class="hint" style="margin-top:0;">
+        <strong>Groq (default, open-source, free)</strong> — no credit card, roughly 30 requests/min and up to ~1,000–14,400 requests/day depending on the model. <strong>Llama 3.3 70B Versatile</strong> is the best balance of quota and quality for this app. <strong>Kimi K2</strong> on Groq is the closest open-weight model to Claude Sonnet on reasoning/code benchmarks, but it has a smaller quota and is occasionally pulled from the free catalog — treat it as a step-up option, not the default.<br><br>
+        <strong>Gemini</strong> has a free daily quota too (flash-lite stretches it furthest) but enabling billing removes the wall if you want this as a daily driver.<br><br>
+        <strong>OpenAI / Anthropic</strong> are paid-only, no free tier — use them if you already have credits and want the strongest possible coaching quality.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ INTERVIEW ============ -->
+  <section id="view-interview" class="hidden">
+    <h1 class="page-title">Interview Simulator</h1>
+    <p class="page-sub">Paste your CV and the job description, pick who's interviewing you, and go.</p>
+
+    <div id="int-setup">
+      <div class="card">
+        <h2>1. Materials</h2>
+        <label>Your CV / résumé (paste as text)</label>
+        <textarea id="cvInput" rows="6" placeholder="Paste your CV text here..."></textarea>
+        <label>Job description</label>
+        <textarea id="jdInput" rows="6" placeholder="Paste the job description here..."></textarea>
+        <label>Anything else worth knowing? (optional)</label>
+        <textarea id="notesInput" rows="2" placeholder="e.g. this is a promotion interview, I'm nervous about salary talk, etc."></textarea>
+        <div class="hint">This app reads pasted text only — no PDF/DOCX parsing yet. Copy-paste from your file works fine.</div>
+      </div>
+
+      <div class="card">
+        <h2>2. Who's interviewing you</h2>
+        <div class="persona-grid" id="personaGrid"></div>
+      </div>
+
+      <div class="card">
+        <h2>3. Difficulty</h2>
+        <select id="difficultySelect">
+          <option value="warmup">Warm-up — supportive, few curveballs</option>
+          <option value="standard" selected>Standard — realistic pushback</option>
+          <option value="tough">Tough — challenges assumptions, digs for evidence</option>
+        </select>
+        <div class="btn-row">
+          <button class="btn" id="genQuestionsBtn">Generate my question set</button>
+        </div>
+        <div class="hint">Generates a tailored set (not all 150 at once — a focused batch keeps quality and quota sane; you can generate more later).</div>
+      </div>
+    </div>
+
+    <div id="int-calibration" class="hidden">
+      <div class="card">
+        <h2>Calibration round</h2>
+        <p class="hint" style="margin-top:0;">Three quick warm-ups so the coaching sounds like <em>you</em>, not a generic AI rewrite. Answer naturally.</p>
+        <div id="calibQuestion" style="font-family:var(--font-display);font-size:16px;margin:14px 0 8px;"></div>
+        <textarea id="calibAnswer" rows="4" placeholder="Type your answer..."></textarea>
+        <div class="mic-row">
+          <button class="mic-btn" id="calibMicBtn">🎤 Speak instead</button>
+          <span class="hint" id="calibMicStatus"></span>
+        </div>
+        <div class="btn-row"><button class="btn" id="calibNextBtn">Next</button></div>
+      </div>
+    </div>
+
+    <div id="int-live" class="hidden">
+      <div class="stage">
+        <div class="interviewer-panel">
+          <div class="avatar-row">
+            <div id="interviewerAvatar"></div>
+            <div>
+              <div class="avatar-name" id="interviewerName"></div>
+              <div class="avatar-role" id="interviewerRole"></div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+              <span class="rec-dot"></span><span style="font-size:11px;color:var(--text-soft);">LIVE</span>
+            </div>
+          </div>
+          <div class="qcount" id="qCounter"></div>
+          <div class="transcript" id="interviewTranscript"></div>
+          <div class="answer-box">
+            <textarea id="liveAnswer" rows="3" placeholder="Type your answer..."></textarea>
+            <div class="mic-row">
+              <button class="mic-btn" id="liveMicBtn">🎤 Speak instead</button>
+              <span class="hint" id="liveMicStatus"></span>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="sendAnswerBtn">Send answer</button>
+              <button class="btn danger" id="endInterviewBtn">End interview</button>
+            </div>
+          </div>
+        </div>
+        <div class="observation-rail">
+          <h3><span class="rec-dot" style="animation:none;background:var(--brass);"></span> Observing</h3>
+          <div id="obsNotes"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="int-report" class="hidden"></div>
+  </section>
+
+  <!-- ============ PRESENTATION ============ -->
+  <section id="view-presentation" class="hidden">
+    <h1 class="page-title">Presentation Studio</h1>
+    <p class="page-sub">Bring your notes, pick an audience, and rehearse out loud (or by typing).</p>
+
+    <div id="pres-setup">
+      <div class="card">
+        <h2>1. Your material</h2>
+        <textarea id="presNotes" rows="8" placeholder="Paste your notes, outline, or talking points..."></textarea>
+      </div>
+      <div class="card">
+        <h2>2. Format</h2>
+        <div class="row">
+          <div>
+            <label>Duration</label>
+            <select id="durationSelect">
+              <option value="180">Quick update — 3 min</option>
+              <option value="300" selected>Daily stand-up — 5 min</option>
+              <option value="600">Project brief — 10 min</option>
+              <option value="1200">Technical presentation — 20 min</option>
+              <option value="custom">Custom</option>
+            </select>
+            <input type="number" id="customDuration" class="hidden" placeholder="Seconds" style="margin-top:8px;">
+          </div>
+          <div>
+            <label>Audience</label>
+            <select id="audienceSelect">
+              <option value="Executive board — terse, impact-focused, interrupts with numbers questions">Executive board</option>
+              <option value="Team meeting — casual, supportive, occasional tangents" selected>Team meeting</option>
+              <option value="Investor pitch — skeptical, ROI-focused, tough Q&A">Investor pitch</option>
+              <option value="Conference room — mixed engagement, some distracted">Conference / stakeholder room</option>
+              <option value="Classroom — curious, asks clarifying basics">Classroom / teaching</option>
+            </select>
+          </div>
+        </div>
+        <label>Audience reactions</label>
+        <select id="reactionMode">
+          <option value="local">Local — instant, free, no API calls (default)</option>
+          <option value="ai">AI-grounded — calls your model every interval, uses more quota</option>
+        </select>
+        <div class="row" id="reactionIntervalWrap">
+          <div>
+            <label>Reaction interval</label>
+            <select id="reactionInterval">
+              <option value="15">Every 15s</option>
+              <option value="30" selected>Every 30s</option>
+              <option value="60">Every 60s (very frugal)</option>
+              <option value="0">Off</option>
+            </select>
+          </div>
+        </div>
+        <div class="btn-row"><button class="btn" id="startPresBtn">Step on stage</button></div>
+      </div>
+    </div>
+
+    <div id="pres-live" class="hidden">
+      <div class="card">
+        <div class="row" style="align-items:center;">
+          <div><span class="timer-display" id="presTimer">00:00</span></div>
+          <div style="text-align:right;"><span class="pill" id="audiencePill"></span></div>
+        </div>
+        <div class="seats" id="seats"></div>
         <div c
